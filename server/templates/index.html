@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+
+    <link rel="stylesheet" href="/static/css/nes.min.css">
+
+
+    <title></title>
+  </head>
+     <style>
+     th, td {
+  padding: 15px;
+}
+     body {
+  background-image: url('/static/images/stage.png');;
+  background-size:1600px;;
+
+
+}
+
+.hidden{
+  display: none !important;
+}
+
+     @font-face {
+    font-family: myFirstFont;
+    src: url(/static/css/PressStart2P-Regular.ttf);
+}
+      html, body, pre, code, kbd, samp {
+          font-family: "myFirstFont";
+      }
+    </style>
+<body>
+<div  background="">
+<h1 style="color:brown;font-size: 60px;" align="center">DUCK HUNT</h1>
+</div>
+
+<div style="height:60vh; display: flex; justify-content:center; align-items:center;">
+<button id="start" type="button" class="nes-btn is-error">START</button>
+</div>
+
+<div class="hidden" style="height:60vh; display: flex; flex-direction: column; justify-content:center; align-items:center;">
+  <h1>Game Over</h1>
+
+  <h2 id="final-score">Final score: 200</h2>
+  </div>
+
+<table align="center" style="color:brown;font-size: 40px;" class="hidden" id="table">
+  <tr>
+    <th><a class="nes-btn" href="#">SHOT</a></th>
+    <th><button type="button" class="nes-btn is-error">SCORE</button></th>
+  </tr>
+  <tr>
+    <td align="center" ><a class="nes-btn" href="#" id="shot"></a></td>
+     <td align="center" ><button type="button" id="score" class="nes-btn is-error">0</button></td>
+  </tr>
+</table>
+
+
+
+<script>
+
+
+let startmusic = setInterval(async ()=>{
+    var score = new Audio('/static/sound/main_low.mp3');
+    await score.play();
+},4500)
+
+let ducksound
+
+function startGame(){
+  clearInterval(startmusic)
+   document.getElementById("table").classList.remove("hidden")
+   document.getElementById("start").parentElement.classList.add("hidden")
+
+   startDuckSound()
+}
+
+function startDuckSound(){
+  ducksound = setInterval(async ()=>{
+    var score = new Audio('/static/sound/duck.mp3');
+    await score.play();
+},2000)
+}
+
+function gameOver(score){
+  clearInterval(ducksound)
+  document.getElementById("final-score").innerText="Final score: " + score
+  document.getElementById("final-score").parentElement.classList.remove("hidden")
+  document.getElementById("table").classList.add("hidden")
+
+  var score = new Audio('/static/sound/gameover.mp3');
+  score.play();
+
+  setTimeout(()=>{
+    window.location.reload()
+  },5000)
+}
+
+
+document.getElementById("start").addEventListener("click",startGame)
+
+
+
+function startLiveUpdate(){
+  let gameOverFlag=false
+
+
+
+
+          var iden='{{id}}';
+
+
+          setInterval(function(){
+
+          fetch('http://192.168.68.104:5000/getData').then(function (response){
+            return response.json()
+          }).then(function(data){
+
+  var score= document.getElementById("score");
+  var shot= document.getElementById("shot");
+
+let prevShot = shot.innerText
+let prevScore = score.innerText
+
+score.innerText = data["score"];
+shot.innerText = data["shot"];
+
+if(prevScore < data["score"]){
+  clearInterval(ducksound)
+setTimeout(async ()=>{
+    var score = new Audio('/static/sound/dog_up.mp3');
+    await score.play();
+
+    startDuckSound()
+},1500)
+}
+// play dog up
+
+if(prevShot > data["shot"]){
+setTimeout(async ()=>{
+    var score = new Audio('/static/sound/shot.mp3');
+    await score.play();
+},10)
+}
+// play shot
+
+if(data["shot"] == -1 && !gameOverFlag){
+  gameOver(prevScore)
+  gameOverFlag=true
+}
+
+      console.log("score:"+data["score"],"shot:"+data["shot"])
+    });
+        },100);
+
+}
+
+
+document.addEventListener('DOMContentLoaded',function(){
+  startLiveUpdate();
+});
+</script>
+
+  </body>
+</html>
